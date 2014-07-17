@@ -1,0 +1,59 @@
+\name{MakeFormula}
+\alias{MakeFormula}
+\title{Create a formula from a list of variables and corresponding transformations.}
+\usage{
+  MakeFormula(vars, transforms = "")
+}
+\arguments{
+  \item{vars}{character vector containing the names of the
+  variables (before transformation) in the formula. The
+  first element should be the lhs variable, and the
+  following elements are the rhs variables.}
+
+  \item{transforms}{list of transformations to be applied
+  to corresponding variables in vars. See the details.}
+}
+\value{
+  A formula object
+}
+\description{
+  Create a formula from a list of variables and
+  corresponding transformations.
+}
+\details{
+  The "transforms" argument should be a list with elements
+  corresponding to variables in the "vars" argument. An
+  element of "transforms" can be an empty string, in which
+  case the corresponding variable is left unchanged, or a
+  string containing a ? symbol, in which case the ? will be
+  replaced by the corresponding variable name, e.g. ?+1 ->
+  VAR+1. The "transforms" list may also contain named
+  argument where the name can be one of 'lags', 'Lags' or
+  'diffs'. If the element is named 'lags' or 'Lags' its
+  value should be a numeric vector indicating which lags of
+  the corresponding variable to include, e.g. lags=1:3 ->
+  lag(VAR,1) + lag(VAR,2) + lag(VAR,3). If the element is
+  named 'diffs' then its value can either be a numeric
+  vector, in which case differences of the given orders
+  will be included, or a list of two numeric vectors. In
+  the latter case the first numeric vector indicates the
+  lags to use for the differences and the second vector
+  indicates the orders of differences to use. All different
+  combinations of these lags and orders will be used in the
+  difference operator applied to the corresponding
+  variable, e.g: diffs=list(1:2,3:4) ->
+  diff(VAR,lag=1,differences=3) +
+  diff(VAR,lag=2,differences=3) +
+  diff(VAR,lag=1,differences=4) +
+  diff(VAR,lag=2,differences=4) If length(transforms) <
+  length(vars) then transforms will be padded with empty
+  strings (which will be replaced by the corresponding
+  elements of vars in the formula).
+}
+\examples{
+MakeFormula(c("y","x","z","w"),list("",lags=1:3,diffs=list(3:4,1:2),"?*2"))
+}
+\author{
+  Ben Veal
+}
+
