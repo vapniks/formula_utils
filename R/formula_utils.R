@@ -1,4 +1,4 @@
-.packageName <- "formula_utils"
+.packageName <- "formulautils"
 
 ##' @title Return the variables in a formula as a character list.
 ##' @param form a formula object.
