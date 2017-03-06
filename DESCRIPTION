@@ -9,3 +9,4 @@ Description: Macros for manipulating formulas
 License: GNU GPLv3
 Collate:
     'formula_utils.R'
+RoxygenNote: 6.0.1

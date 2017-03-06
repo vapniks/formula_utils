@@ -25,6 +25,7 @@ get.vars2 <- function(form,strip=FALSE)
 
 
 ##' @title Create a formula from a list of variables and corresponding transformations.
+##' @description Create a formula from a list of variables and corresponding transformations.
 ##' @details The "transforms" argument should be a list with elements corresponding to variables in the "vars" argument.
 ##' An element of "transforms" can be an empty string, in which case the corresponding variable is left unchanged,
 ##' or a string containing a ? symbol, in which case the ? will be replaced by the corresponding variable name, e.g.
@@ -43,66 +44,60 @@ get.vars2 <- function(form,strip=FALSE)
 ##' The first element should be the lhs variable, and the following elements are the rhs variables.
 ##' @param transforms list of transformations to be applied to corresponding variables in vars.
 ##' See the details.
+##' @param showWarnings logical value indicating whether or not to show warnings when number of transforms doesn't
+##' match number of vars (default = TRUE)
 ##' @return A formula object
 ##' @author Ben Veal
 ##' @examples MakeFormula(c("y","x","z","w"),list("",lags=1:3,diffs=list(3:4,1:2),"?*2"))
 ##' @export
-MakeFormula <- function(vars,transforms="")
-{
-  stopifnot(class(vars)=="character" && length(vars) > 1)
-  stopifnot(class(transforms)=="list")
-  nvars <- length(vars)
-  ntrans <- length(transforms)
-  if(nvars < ntrans)
-    warning("More transforms than vars. Only the first length(vars) of them will be used.")
-  else if(ntrans < nvars)
-    {
-      warning("There are more vars than transforms. transforms will be padded with empty strings to match the extra vars.")
-      transforms[(ntrans+1):nvars] <- ""
+MakeFormula <- function(vars,transforms=list(""),showWarnings=TRUE) {
+    stopifnot(class(vars)=="character" && length(vars) > 1)
+    stopifnot(class(transforms)=="list")
+    nvars <- length(vars)
+    ntrans <- length(transforms)
+    if(showWarnings && nvars < ntrans)
+        warning("More transforms than vars. Only the first length(vars) of them will be used.")
+    else if(ntrans < nvars) {
+        if(showWarnings)
+            warning("There are more vars than transforms. transforms will be padded with empty strings to match the extra vars.")
+        transforms[(ntrans+1):nvars] <- ""
     }
-  terms <- ""
-  for(i in 1:length(vars))
-    {
-      var <- vars[i]
-      trans <- transforms[[i]]
-      type <- names(transforms)[i]
-      if(type=="lags")
-        {
-          stopifnot(class(trans) %in% c("numeric","integer"))
-          terms <- paste(terms,"+",paste(sub("VAR",var,paste("lag(VAR,",trans,")")),collapse="+"))
-        }
-      else if(type=="Lags")
-        {
-          stopifnot(class(trans) %in% c("numeric","integer"))          
-          terms <- paste(terms,"+",paste(sub("VAR",var,paste("Lag(VAR,",trans,")")),collapse="+"))
-        }
-      else if(type=="diffs")
-        {
-          stopifnot(class(trans) %in% c("numeric","integer","list"))
-          if(class(trans) %in% c("numeric","integer"))
-            terms <- paste(terms,"+",paste(sub("VAR",var,paste("diff(VAR,differences=",trans,")")),collapse="+"))
-          else
-            {
-              stopifnot(length(trans)==2)
-              stopifnot(class(trans[[1]]) %in% c("numeric","integer"))
-              stopifnot(class(trans[[2]]) %in% c("numeric","integer"))
-              lags <- sub("VAR",var,paste("diff(VAR,lags=",trans[[1]]))
-              for(lag in lags)
-                terms <- paste(terms,"+",paste(lag,",differences=",trans[[2]],")",collapse="+"))
+    terms <- ""
+    for(i in 1:length(vars)) {
+        var <- vars[i]
+        trans <- transforms[[i]]
+        type <- names(transforms)[i]
+        if(!is.null(type)) {
+            if(type=="lags") {
+                stopifnot(class(trans) %in% c("numeric","integer"))
+                terms <- paste(terms,"+",paste(sub("VAR",var,paste("lag(VAR,",trans,")")),collapse="+"))
+            } else if(type=="Lags") {
+                stopifnot(class(trans) %in% c("numeric","integer"))          
+                terms <- paste(terms,"+",paste(sub("VAR",var,paste("Lag(VAR,",trans,")")),collapse="+"))
+            } else if(type=="diffs") {
+                stopifnot(class(trans) %in% c("numeric","integer","list"))
+                if(class(trans) %in% c("numeric","integer"))
+                    terms <- paste(terms,"+",paste(sub("VAR",var,paste("diff(VAR,differences=",trans,")")),collapse="+"))
+                else {
+                    stopifnot(length(trans)==2)
+                    stopifnot(class(trans[[1]]) %in% c("numeric","integer"))
+                    stopifnot(class(trans[[2]]) %in% c("numeric","integer"))
+                    lags <- sub("VAR",var,paste("diff(VAR,lags=",trans[[1]]))
+                    for(lag in lags)
+                        terms <- paste(terms,"+",paste(lag,",differences=",trans[[2]],")",collapse="+"))
+                }
             }
-        }
-      else if(type=="")
-        {
-          stopifnot(class(trans)=="character")
-          if(trans=="")
-            terms <- paste(terms,"+",var)
-          else
-            terms <- paste(terms,"+",sub("\\?",var,trans))
+        } else {
+            stopifnot(class(trans)=="character")
+            if(trans=="")
+                terms <- paste(terms,"+",var)
+            else
+                terms <- paste(terms,"+",sub("\\?",var,trans))
         }
     }
-  terms <- sub("\\+","",terms)
-  terms <- sub("\\+","~",terms)
-  return(as.formula(terms))
+    terms <- sub("\\+","",terms)
+    terms <- sub("\\+","~",terms)
+    return(as.formula(terms))
 }
 
 ##' @title Create formula from union of independent variables of other formulae.
